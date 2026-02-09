@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공통영어1 능률 오선영 1-4과 영작연습</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sweet', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3B82F6', // blue-500
+                        secondary: '#6B7280', // gray-500
+                        accent: '#8B5CF6', // purple-500
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        @font-face {
+            font-family: 'Sweet';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/SUITE-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        body {
+            font-family: 'Sweet', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        @keyframes scale-in {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback } = React;
+
+        // --- 데이터 처리 유틸리티 ---
+        const processSentenceToWords = (sentence) => {
+            let cleanText = sentence.trim();
+            // 문장 부호 제거 (괄호 포함)
+            cleanText = cleanText.replace(/[.,?!“”"‘’()]/g, ""); 
+            const tokens = cleanText.split(/\s+/);
+            
+            if (tokens.length > 0) {
+                // 첫 단어 소문자 처리 (I, I'm 등 제외)
+                let firstWord = tokens[0];
+                if (firstWord !== "I" && !firstWord.startsWith("I'") && !firstWord.startsWith("I’")) {
+                     firstWord = firstWord.charAt(0).toLowerCase() + firstWord.slice(1);
+                }
+                tokens[0] = firstWord;
+            }
+            return tokens;
+        };
+
+        // --- 원본 데이터 ---
+        const rawData = {
+            lesson1: [
+                { isImportant: true, korean: "\"우리 자신의 더 나은 모습으로 성장하기 위해서, 우리는 지금 모습 그대로 머물러 있어서는 안 됩니다.\"", correct: "\"To grow into a better version of ourselves, we should not stay as we are.\"" },
+                { isImportant: false, korean: "그것은 학교 첫날 우리 선생님이 우리에게 하신 첫 번째 말씀이었다.", correct: "That was the first thing our teacher said to us on the first day of school." },
+                { isImportant: true, korean: "그녀는 우리가 우리 자신을 우리의 안전지대 밖으로 밀어내고 우리 자신에 관해 더 많이 배움으로써 학기를 시작하기를 바라셨다.", correct: "She wanted us to start the semester by pushing ourselves out of our comfort zones and learning more about ourselves." },
+                { isImportant: false, korean: "우리가 그렇게 하는 것을 도와주기 위해서, 그녀는 우리에게 세 가지 다른 방식으로 우리 자신에게 도전할 과제를 주셨다.", correct: "To help us do so, she gave us an assignment to challenge ourselves in three different ways." },
+                { isImportant: false, korean: "그 세 가지 도전들은 취미, 운동, 우리의 학업, 혹은 심지어 우리의 관계까지도 수반할 수 있었다.", correct: "The three challenges could involve hobbies, exercise, our studies, or even our relationships." },
+                { isImportant: true, korean: "가장 중요한 부분은 각각의 것에 대해 새로운 무언가를 시도해 보는 것이었다.", correct: "The important part was trying something new for each one." },
+                { isImportant: false, korean: "그녀는 우리에게 우리가 도전들을 마치면 반 친구들에게 우리의 경험을 공유해야 한다고 말씀하셨다.", correct: "She told us that we should share our experiences with our classmates when we finished the challenges." },
+                { isImportant: false, korean: "요즘, 나는 스트리밍 서비스로 영화를 보는 경향이 있다.", correct: "These days, I tend to watch movies on streaming services." },
+                { isImportant: false, korean: "그런데, 만약 내가 영화관에 가면, 나는 보통 친구들이나 가족과 함께 액션이나 공상과학 영화를 본다.", correct: "However, if I go to the theater, I usually watch an action or science fiction movie with my friends or family." },
+                { isImportant: false, korean: "그것들은 그들이 즐기는 종류의 영화들이다.", correct: "Those are the kinds of movies they enjoy." },
+                { isImportant: true, korean: "혼자 영화관에 가는 것은 내가 이전에 한 번도 해보지 않은 것이었다.", correct: "Going to the theater alone was something I had never done before." },
+                { isImportant: false, korean: "그래서, 첫 번째 도전으로, 나는 그것을 시도해 보기로 결심했다.", correct: "So, for the first challenge, I decided to give it a try." },
+                { isImportant: true, korean: "스스로 영화와 좌석을 선택하는 것이 좋았다.", correct: "It was nice to choose the movie and the seat on my own." },
+                { isImportant: false, korean: "나는 다른 누군가의 선호에 관해 걱정하지 않아도 되었다.", correct: "I didn't have to worry about anyone else's preferences." },
+                { isImportant: false, korean: "나는 그 경험을 다른 것을 관람할 좋은 기회라고 보았으므로, 나는 내가 궁금해해 왔던 사극을 골랐다.", correct: "I saw the experience as a good opportunity to watch something different, so I chose a historical drama that I had been curious about." },
+                { isImportant: true, korean: "처음에는, 혼자 극장 안에 앉아 있는 것이 다소 어색하고 외롭게 느껴졌다.", correct: "At first, it felt a bit awkward and lonely to sit in the theater by myself." },
+                { isImportant: false, korean: "하지만 영화가 시작하자마자, 나는 이야기에 완전히 몰두하게 되었다.", correct: "But once the movie started, I became completely absorbed in the story." },
+                { isImportant: true, korean: "그저 영화 자체에 집중하는 것이 매우 만족스러웠다.", correct: "It was so satisfying just to focus on the movie itself." },
+                { isImportant: false, korean: "나를 산만하게 할 게 아무것도 없었다!", correct: "There was nothing to distract me!" },
+                { isImportant: true, korean: "이 경험은 내가 가끔 일을 혼자 하는 것을 즐긴다는 것을 깨닫게 했다.", correct: "This experience made me realize that I sometimes enjoy doing things alone." },
+                { isImportant: false, korean: "영화 후에, 나는 앞으로 더 자주 나만의 선택을 하도록 노력하고 혼자서 더 많은 활동들을 즐기겠다고 스스로 약속했다.", correct: "After the movie, I promised myself that I would try to make my own choices more often and enjoy more activities by myself in the future." },
+                { isImportant: false, korean: "어릴 때부터, 나는 항상 물을 두려워해 왔다.", correct: "Ever since I was a child, I've always been afraid of water." },
+                { isImportant: false, korean: "그래서 나는 물놀이를 즐기거나 그것을 하는 동안 편하게 느낀 적이 한 번도 없었다.", correct: "So I have never enjoyed water activities or felt comfortable while doing them." },
+                { isImportant: true, korean: "두 번째 도전으로, 나는 이 불편함을 극복하기 위해 노력하기로 결심했다.", correct: "For the second challenge, I decided to try to overcome this discomfort." },
+                { isImportant: false, korean: "하지만 나는 처음에 무엇을 해야 할지 잘 몰랐다.", correct: "However, I wasn't sure what to do at first." },
+                { isImportant: false, korean: "어느 날, 나는 소셜 미디어로 실내 수영장에서 서핑하는 사촌의 영상을 우연히 보았다.", correct: "One day, I came across a video clip of my cousin surfing at an indoor pool on social media." },
+                { isImportant: false, korean: "그것은 재미있어 보였고, 나는 그것이 바다가 아닌 얕은 수영장에서 행해졌다는 사실이 마음에 들었다.", correct: "It looked fun, and I liked the fact that it took place in a shallow pool, not in the ocean." },
+                { isImportant: false, korean: "나는 내 사촌에게 그것에 관해 메시지를 보냈다.", correct: "I messaged my cousin about it." },
+                { isImportant: false, korean: "그녀가 내게 그것이 아주 어렵지는 않았다고 장담해서, 나는 초보자 과정에 등록했다.", correct: "She assured me that it wasn't too hard, so I signed up for a beginner course." },
+                { isImportant: true, korean: "강습 초반에는 그저 보드 위에서 일어나는 것이 어려웠다.", correct: "At the beginning of the lesson, it was hard just to stand up on the board." },
+                { isImportant: true, korean: "그러나 강사로부터의 약간의 도움 후, 나는 제대로 균형을 잡는 법을 배웠고 심지어는 용케 약간의 파도를 탔다!", correct: "After some help from the instructor, however, I learned how to balance properly and even managed to surf a few waves!" },
+                { isImportant: false, korean: "그것은 내게 솟아나는 흥분감을 주었다.", correct: "It gave me such a rush of excitement." },
+                { isImportant: true, korean: "물속에 있는 것은 내가 생각했었던 것만큼 나쁘지 않았다.", correct: "Being in the water wasn't as bad as I had thought." },
+                { isImportant: false, korean: "그 경험이 수상 스포츠에 대한 내 생각을 완전히 변화시킨 것은 아니었지만, 그것은 내가 나의 모험심을 발견하는 데 정말로 도움이 되었다.", correct: "While the experience didn't completely change my mind about water sports, it did help me discover my sense of adventure." },
+                { isImportant: false, korean: "나 자신을 위해 선택한 모든 도전 중에서, 세 번째 것이 나를 가장 초조하게 했다: 내 머리 모양을 바꾸는 것이었다.", correct: "Of all the challenges I chose for myself, the third one made me the most nervous: changing my hairstyle." },
+                { isImportant: false, korean: "수년간, 나는 내 이마가 걱정되었기 때문에 같은 머리 모양을 유지해 왔었다.", correct: "For many years, I had kept the same hairstyle because I had been worried about my forehead." },
+                { isImportant: false, korean: "나는 그것이 넓다고 항상 생각해 왔고, 그것에 주의를 끌고 싶지 않았다.", correct: "I had always thought it was large, and I didn't want to draw attention to it." },
+                { isImportant: false, korean: "첫 두 가지 도전 후에 자신감을 느끼고 있었기 때문에, 나는 미용실에 가서 미용사에게 말을 건넸다.", correct: "Since I was feeling confident after the first two challenges, I went to a hair salon and talked to the stylist." },
+                { isImportant: true, korean: "그는 나의 우려를 듣고 내가 내게 어울리는 더 짧은 머리 모양을 찾도록 도와주었다.", correct: "He listened to my concerns and helped me find a shorter hairstyle that suited me." },
+                { isImportant: false, korean: "다음 날 학교에서 나의 반 친구들은 약간 놀랐다.", correct: "The next day at school, my classmates were a bit surprised." },
+                { isImportant: false, korean: "그러나 전반적으로는, 반응이 긍정적이었다.", correct: "But overall, the reactions were positive." },
+                { isImportant: true, korean: "나는 다른 모습을 시도하는 것이 내가 그럴 거라고 생각했던 만큼 어렵지 않다는 것을 깨달았다.", correct: "I realized that trying a different look wasn't as difficult as I thought it would be." },
+                { isImportant: true, korean: "사실, 그것은 내가 나 자신에 대해 더 자신감을 느끼게 했다.", correct: "In fact, it made me feel more confident about myself." },
+                { isImportant: true, korean: "나는 나의 안전지대에서 나오는 것이 내가 나 자신에 대해 생각하는 방식에 이렇게 긍정적인 영향을 미칠 거라고 예상하지 못했다.", correct: "I didn't expect that stepping out of my comfort zone would have such a positive effect on how I felt about myself." },
+                { isImportant: false, korean: "나는 이번 과제를 통해 나 자신에 관해 많이 배웠고, 나의 반 친구들도 그러했다는 것을 알게 되었다.", correct: "I learned a lot about myself through this assignment, and I found out that my classmates did, too." },
+                { isImportant: false, korean: "그들 중 한 명은 여러 나라의 새로운 음식들을 먹어 본 반면, 다른 친구는 문예 창작 동아리에 가입했다.", correct: "One of them tried new foods from different countries, while another joined a creative writing club." },
+                { isImportant: true, korean: "이 경험들을 통해, 우리 모두는 새로운 것들을 시도하기 위해 우리 자신을 밀어붙이는 것이 얼마나 중요한지 깨달았다.", correct: "Through these experiences, we all realized how important it is to push ourselves to try new things." },
+                { isImportant: false, korean: "우리는 삶에 대한 여러 시각을 얻었고 매우 즐거운 시간을 보내기도 했다!", correct: "We gained different perspectives on life and had a lot of fun, too!" },
+                { isImportant: false, korean: "나의 반 친구들과 나는 심지어 우리 자신을 위해 더 많은 도전들을 정하는 것에 관해 이야기하기도 했다.", correct: "My classmates and I even talked about setting more challenges for ourselves." },
+                { isImportant: true, korean: "우리 자신에 관해 발견할 수 있는 더 많은 것들이 항상 있고, 계속해서 배우고 성장하는 것은 신이 나는 일이다.", correct: "There are always more things that we can discover about ourselves, and it's exciting to keep learning and growing." },
+                { isImportant: true, korean: "우리가 시도할 때까지 우리는 우리가 무엇을 할 수 있는지 전혀 모른다!", correct: "We never know what we're capable of until we try!" }
+            ],
+            lesson2: [
+                { isImportant: false, korean: "오늘 방송에서는 우정 벤치라고 불리는 잠바브웨의 특별한 공원 벤치에 대해 알아보겠습니다.", correct: "On today's show, we are going to learn about special park benches in Zimbabwe called friendship Benches." },
+                { isImportant: false, korean: "두 분의 특별한 손님들이 있습니다.", correct: "We have two special guests." },
+                { isImportant: false, korean: "먼저 우정 벤치 프로그램의 창시자인 Dixon Chibanda 박사님을 환영해 주세요.", correct: "First, please welcome the founder of the Friendship Bench program, Dr. Dixon Chibanda." },
+                { isImportant: true, korean: "무엇이 박사님으로 하여금 그 프로그램을 떠올리도록 영감을 주었는지 저희에게 말씀해 주시겠어요?", correct: "Can you tell us what inspired you to come up with the program?" },
+                { isImportant: false, korean: "네, 그 아이디어는 제가 정신과 의사로서 겪었던 경험에서 나왔습니다.", correct: "Sure. The idea came from an experience I had as a psychiatrist." },
+                { isImportant: false, korean: "제 환자 중 한 명이 심하게 우울증을 앓게 되었습니다.", correct: "One of my patients had become severely depressed." },
+                { isImportant: false, korean: "하지만 그녀는 병원까지 가는 버스비를 감당할 여유가 없어 도움을 받을 수 없었습니다.", correct: "However, she couldn't get help because she was unable to afford the bus ride to the hospital." },
+                { isImportant: false, korean: "이것은 저에게 충격을 주었는데, 제가 전에는 한 번도 그런 문제를 생각해 본 적이 없었기 때문입니다.", correct: "This shocked me, as I had never considered such a problem before." },
+                { isImportant: true, korean: "실제로, 짐바브웨에서는 많은 사람들이 교통비를 내고 의학적 치료를 받는 것이 어렵습니다.", correct: "In fact, it is difficult for many people in Zimbabwe to pay for transportation and receive medical treatment." },
+                { isImportant: false, korean: "게다가 그 나라에서는 수년 동안 정신과 의사가 부족했습니다.", correct: "Furthermore, there has been a lack of psychiatrists in the country for many years." },
+                { isImportant: false, korean: "2006년에는 우정 벤치 프로그램이 시작되었을 때, 1,200만 명이 넘는 짐바브웨의 인구를 위해 일하는 정신과 의사는 11명뿐이었습니다.", correct: "When the Friendship Bench program started in 2006, there were only eleven psychiatrists serving Zimbabwe's population of over twelve million people." },
+                { isImportant: true, korean: "저는 정신의학을 지역 사회에 도입할 방법을 찾아야 했습니다.", correct: "I needed to find a way to bring psychiatry into the community." },
+                { isImportant: false, korean: "아, 그러니까 그게 그것의 시작이었군요.", correct: "Oh, so that was the beginning of it." },
+                { isImportant: true, korean: "우정 벤치 프로그램이 어떻게 운영되는지 저희에게 설명해 주시겠어요?", correct: "Could you explain to us how the Friendship Bench program works?" },
+                { isImportant: false, korean: "물론이죠.", correct: "Certainly." },
+                { isImportant: true, korean: "그 프로그램은 접근하기 쉬운 정신 건강 서비스를 제공할 하나의 방법으로 만들어졌습니다.", correct: "The program was created as a way to provide accessible mental health services." },
+                { isImportant: false, korean: "그것은 우울증이나 불안과 같은 문제를 겪고 있는 사람들에게 대화 치료 세션을 제공합니다.", correct: "It offers talk therapy sessions to people dealing with issues such as depression or anxiety." },
+                { isImportant: false, korean: "그 세션은 무료이며 지역 사회의 존경받는 노인 여성들에 의해 제공됩니다.", correct: "The sessions are free and are provided by respected elderly women from the community." },
+                { isImportant: false, korean: "'할머니들'이라고 불리는 이 여성들은 환자들과 함께 벤치에 앉는 것을 자원하고, 그들의 이야기를 듣고, 그들에게 정서적 지원을 제공합니다.", correct: "These women, called \"grandmothers,\" volunteer to sit with patients at the benches, listen to their stories, and provide them with emotional support." },
+                { isImportant: false, korean: "정말 멋진 아이디어군요! 이 놀라운 할머니들이 어떻게 당신의 프로그램의 일부가 되었나요?", correct: "What a wonderful idea! How did these amazing grandmothers become a part of your program?" },
+                { isImportant: false, korean: "할머니들은 지역 사회와 깊이 연결되어 있기 때문에 저희 프로그램에 선정되었습니다.", correct: "Grandmothers were chosen for our program because they are deeply connected to the community." },
+                { isImportant: true, korean: "또한 그들은 뛰어난 경청 기술, 공감, 그리고 의미 있는 토론에 참여할 수 있는 능력과 같은, 상담가로서의 모든 자질을 갖추고 있습니다.", correct: "Moreover, they have all the qualities of a counselor, such as excellent listening skills, empathy, and the ability to engage in meaningful discussions." },
+                { isImportant: true, korean: "그들은 또한 매우 믿음직한데, 이는 정신건강을 지원하려는 우리의 노력에 중요합니다.", correct: "They are also very reliable, which is important for our efforts to support mental health." },
+                { isImportant: false, korean: "처음에, 저희는 겨우 14명의 자원봉사자 할머니들과 함께 시작했습니다.", correct: "At the beginning, we started with only fourteen volunteer grandmothers." },
+                { isImportant: false, korean: "하지만 오늘날 짐바브웨는 우정 벤치 치료를 제공하도록 교육받은 수천 명의 할머니가 있습니다.", correct: "But today, there are thousands of grandmothers who have been trained to provide Friendship Bench therapy in Zimbabwe." },
+                { isImportant: false, korean: "흥미롭네요! 환자들이 할머니들과의 세션을 마친 후에는 무슨 일이 일어나나요?", correct: "That's interesting! What happens after patients complete their sessions with the grandmothers?" },
+                { isImportant: true, korean: "할머니들과의 세션이 끝나면, 환자들은 프로그램의 이전 환자들로 구성된 커뮤니티 지원 그룹에 참여하도록 권장됩니다.", correct: "When the sessions with the grandmothers are over, patients are encouraged to join a community support group made up of former patients of the program." },
+                { isImportant: false, korean: "이 그룹의 구성원들은 서로 쉽게 공감하고 지지할 수 있습니다.", correct: "The members of these groups can easily relate to and support one another." },
+                { isImportant: false, korean: "이것은 그들 대부분이 같은 지역 사회 출신이고 비슷한 어려움을 겪은 경험이 있기 때문입니다.", correct: "This is because most of them come from the same community and have experienced similar struggles." },
+                { isImportant: true, korean: "지원을 지속하고 공동체 의식을 키울 수 있는 좋은 방법인 것 같네요.", correct: "That sounds like a great way to continue the support and build a sense of community." },
+                { isImportant: false, korean: "그리고 그 프로그램은 매우 성공적이었습니다. 그렇죠?", correct: "And the program has been incredibly successful, right?" },
+                { isImportant: false, korean: "맞습니다. 2022년에, 저희는 짐바브웨에서 약 9만 명의 환자들에게 대면 상담을 제공했습니다.", correct: "That's correct. In 2022, we provided face-to-face counseling to about 90,000 patients in Zimbabwe." },
+                { isImportant: false, korean: "현재, 우정 벤치는 전국의 20곳이 넘는 지역에서 이용 가능합니다.", correct: "Now, Friendship Benches are available in more than twenty different regions around the country." },
+                { isImportant: true, korean: "저희의 비전은 모두가 걸어서 갈 수 있는 거리에 우정 벤치를 갖는 것이고, 저희는 그것을 실현하기 위해 열심히 일하고 있습니다.", correct: "Our vision is for everyone to have a Friendship Bench within walking distance, and we are working hard to make it happen." },
+                { isImportant: false, korean: "저희는 또한 그 프로그램을 확장하기 시작했고, 이제는 앱을 통해 온라인 상담을 제공합니다.", correct: "We've also started expanding the program, and we now offer online counseling through an app." },
+                { isImportant: false, korean: "이것은 저희가 훨씬 더 많은 사람들에게 다가갈 수 있게 도와주었죠.", correct: "This has helped us reach even more people." },
+                { isImportant: false, korean: "정말 놀랍습니다! 시간을 내주셔서 감사합니다, 치반다 박사님.", correct: "That's really amazing! Thank you for your time, Dr. Chibanda." },
+                { isImportant: false, korean: "이제 프로그램에 자원봉사하는 할머니 한 분의 이야기를 들어보겠습니다.", correct: "Now let's hear from one of the grandmothers who volunteers for the program." },
+                { isImportant: true, korean: "자기소개를 해주시고, 어떻게 프렌드십 벤치 프로그램에 참여하게 되었는지 말씀해 주시겠어요?", correct: "Can you introduce yourself and tell us how you got involved with the Friendship Bench program?" },
+                { isImportant: false, korean: "안녕하세요, 제 이름은 주디스 모요입니다만, 사람들은 저를 할머니 모요라고 부릅니다.", correct: "Hello, my name is Judith Moyo, but people call me Grandma Moyo." },
+                { isImportant: true, korean: "정신 건강 문제에 대한 도움을 구하는 것은 부끄러워할 일이 아닙니다.", correct: "Seeking help for mental health problems is nothing to be ashamed of." },
+                { isImportant: true, korean: "저는 76세이고, 프렌드십 벤치 프로그램에 약 8년 동안 자원봉사를 해왔습니다.", correct: "I'm 76 years old, and I have been volunteering for the Friendship Bench program for about eight years." },
+                { isImportant: false, korean: "제가 이 프로그램에 참여하게 된 이유는 우리 지역 사회의 많은 사람들이 정신 건강 문제로 고통받고 있기 때문입니다.", correct: "I joined the program because many people in my community struggle with mental health problems, and I wanted to do something about it." },
+                { isImportant: true, korean: "저는 그들의 상처받은 마음을 지지함으로써 치유할 수 있다고 생각했습니다.", correct: "I knew that I could help heal their wounded hearts by supporting them." },
+                { isImportant: false, korean: "정말 다정하시네요.", correct: "That's very kind of you." },
+                { isImportant: false, korean: "우정 벤치 프로그램을 위한 할머니로서 당신의 경험에 관해 저희에게 말씀해 주실 수 있을까요?", correct: "Can you tell us about your experience as a grandmother for the Friendship Bench program?" },
+                { isImportant: false, korean: "정말 좋았습니다.", correct: "It's been wonderful." },
+                { isImportant: true, korean: "저는 그것이 사람들의 삶에 어떻게 변화를 가져올 수 있는지 보았습니다.", correct: "I've seen how it can make a difference in people's lives." },
+                { isImportant: false, korean: "제 환자 중 한 명인 열아홉 살의 소녀는 그녀의 엄마가 돌아가신 후 힘든 시간을 보내고 있었습니다.", correct: "One patient of mine, a nineteen-year-old girl, was going through a difficult time after her mom passed away." },
+                { isImportant: false, korean: "저는 그녀를 상담했고 그녀가 회복의 여정을 시작할 수 있도록 도왔습니다.", correct: "I counseled her and helped her begin her recovery journey." },
+                { isImportant: false, korean: "이제 그녀의 삶은 다시 정상 궤도에 올랐고, 그녀는 심지어 자신의 사업도 시작했습니다!", correct: "Now her life is back on track, and she has even started her own business!" },
+                { isImportant: false, korean: "이와 같은 사례들은 제가 그 프로그램의 일부가 된 것을 매우 자랑스러워하게 합니다.", correct: "Cases like this make me so proud to be part of the program." },
+                { isImportant: true, korean: "사람들이 그들의 삶에서 긍정적인 변화를 만들도록 돕는 것은 정말 보람된 경험입니다.", correct: "It is such a rewarding experience to help people make positive changes in their lives." },
+                { isImportant: false, korean: "오늘 저희에게 당신의 경험을 공유해 주셔서 감사합니다, Moyo 할머니.", correct: "Thanks for sharing your experiences with us today, Grandma Moyo." },
+                { isImportant: true, korean: "우정 벤치 프로그램이 미친 영향력을 보는 것은 정말 고무적입니다.", correct: "It's truly inspiring to see the influence that the Friendship Bench program has had." },
+                { isImportant: false, korean: "그리고 그것은 모두 당신과 Chibanda 박사님 같은 분들의 노고 덕분입니다.", correct: "And it's all thanks to the hard work of people like you and Dr. Chibanda." }
+            ],
+            lesson3: [
+                { isImportant: false, korean: "나무에게,", correct: "Dear Tree," },
+                { isImportant: false, korean: "내가 너를 지나쳐 갈 때마다, 너의 아름다운 이파리들이 내 얼굴에 미소를 띠게 해.", correct: "Whenever I walk past you, your beautiful leaves bring a smile to my face." },
+                { isImportant: false, korean: "내가 네 앞에 서서 신선한 공기를 깊이 들이마실 때마다 나는 네가 만들어 내는 산소에 감사해.", correct: "Whenever I stop in front of you and take a deep breath of fresh air, I appreciate the oxygen that you produce." },
+                { isImportant: true, korean: "너와 네 모든 친구들이 없다면, 우리 인간들은 충분한 산소를 얻을 수 없을 거야.", correct: "Without you and all your friends, we humans wouldn't be able to get enough oxygen." },
+                { isImportant: false, korean: "그건 그렇고, 나는 한 새 가족이 너의 가지에 둥지를 튼 것을 알아챘어.", correct: "By the way, I noticed that a family of birds has made a nest in your branches." },
+                { isImportant: true, korean: "네가 그들에게 집을 제공해 주는 것은 정말 친절해.", correct: "It's so kind of you to provide them with a home." },
+                { isImportant: true, korean: "나는 더 많은 사람들이 너와 다른 모든 나무들이 환경에 얼마나 중요한지 깨닫기를 바라.", correct: "I hope that more people realize how important you and all the other trees are to the environment." },
+                { isImportant: false, korean: "좋은 하루 보내!", correct: "Have a nice day!" },
+                { isImportant: false, korean: "믿기 힘들겠지만, 호주 멜버른의 나무들은 이와 같은 이메일을 항상 받는다.", correct: "Believe it or not, trees in Melbourne, Australia receive emails like this all the time." },
+                { isImportant: true, korean: "나무들이 이메일 주소를 갖고 있는 것이 어떻게 가능할까?", correct: "How is it possible that trees have email addresses?" },
+                { isImportant: false, korean: "그리고 사람들은 왜 그들에게 메시지들을 보내고 있는 걸까?", correct: "And why are people sending them messages?" },
+                { isImportant: false, korean: "이런 이메일들 뒤의 이야기는 호주의 밀레니엄 가뭄에 대한 대응인, 멜버른의 도시숲 전략 계획으로 시작한다.", correct: "The story behind these emails begins with Melbourne's Urban Forest Strategy plan, a response to Australia's millennium drought." },
+                { isImportant: false, korean: "이 가뭄은 1990년대 후반부터 2010년까지 계속되었다.", correct: "This drought lasted from the late 1990s to 2010." },
+                { isImportant: true, korean: "그것이 끝날 때쯤, 도시의 77,000그루의 나무들 중 40퍼센트가 건강이 나빠지는 상태에 있었다.", correct: "By the time it ended, 40 percent of the city's 77,000 trees were in a state of declining health." },
+                { isImportant: false, korean: "게다가, 나무들의 전반적인 수도 감소하고 있었다.", correct: "Furthermore, the overall number of trees was decreasing." },
+                { isImportant: true, korean: "그 결과, 임관 피복도라고도 알려져 있는, 도시 내에서 나무에 의해 제공되는 그들의 양이 감소했다.", correct: "As a result, the amount of shade provided by trees within the city, (which is) also known as canopy cover, decreased." },
+                { isImportant: false, korean: "임관 피복도의 줄어듦은 기온을 상승시키기 때문에 도시 환경에 주요한 위협이다.", correct: "The loss of canopy cover is a major threat to urban environments because it raises temperatures." },
+                { isImportant: false, korean: "도시 내에서의 보다 높은 기온은 주민들에게 위험할 수 있는데, 이는 그것들(=보다 높은 기온)이 열사병의 위험을 높이기 때문이다.", correct: "Higher temperatures in cities can be dangerous for residents, as they increase the risk of heat exhaustion." },
+                { isImportant: false, korean: "그것들은 또한 에어컨 사용의 증가로 이어진다.", correct: "They also lead to a rise in the use of air-conditioning." },
+                { isImportant: false, korean: "이는 에너지 소비와 온실가스 배출물을 증가시킴으로써 기후변화를 가속화한다.", correct: "This speeds up climate change by increasing energy consumption and greenhouse gas emissions." },
+                { isImportant: false, korean: "무언가가 멜버른 나무들의 줄어듦에 대처하기 위해서 행해져야 했다.", correct: "Something had to be done to deal with the loss of Melbourne's trees." },
+                { isImportant: false, korean: "2012년에, 시 정부는 도시숲 전략 계획을 발표했다.", correct: "In 2012, the city government announced its Urban Forest Strategy plan." },
+                { isImportant: true, korean: "그것은 다음 20년 동안 매년 3,000그루가 넘는 나무들을 심는 야심찬 목표를 설정했다.", correct: "It set the ambitious goal of planting more than 3,000 trees every year for the next twenty years." },
+                { isImportant: false, korean: "그 계획은 또한 도시숲 시각 자료라고 불리는 온라인 지도 제작을 포함했다.", correct: "The plan also involved the creation of an online map called the Urban Forest Visual." },
+                { isImportant: false, korean: "이 대화형 지도는 도시 내의 공원과 그것의 도로를 따라 나무 하나하나의 위치를 보여준다.", correct: "This interactive map shows the location of every single tree in the city's parks and along its roads." },
+                { isImportant: false, korean: "그것은 각 나무의 나이와 속을 나타내기 위해 색상과 기호를 사용한다.", correct: "It uses colors and symbols to indicate each tree's age and genus." },
+                { isImportant: true, korean: "또한, 사용자들은 그것(=나무)의 종을 알아내고 심지어는 그것에게 이메일을 보내기 위해 나무를 클릭할 수 있다.", correct: "Also, users can click on a tree to find out its species and even (to) send it an email." },
+                { isImportant: false, korean: "처음에는, '이 나무에게 이메일 보내기' 기능이 특정한 목적을 가지고 있었다.", correct: "At first, the \"Email this tree\" function had a specific purpose." },
+                { isImportant: true, korean: "그것은 사람들이 의회에서 일하는 사람들에게 손상되거나 건강이 좋지 않은 나무들에 관해 쉽게 알려주도록 하기 위해 고안되었다.", correct: "It was designed to allow people to easily inform council workers about trees that were damaged or in poor health." },
+                { isImportant: false, korean: "지도가 온라인에 게재된 후, 예상 밖의 일이 일어났다.", correct: "After the map was posted online, something unexpected happened." },
+                { isImportant: false, korean: "나무들이 수천 개의 이메일들을 받기 시작했지만, 그것들 중 많은 것이 손상이나 좋지 않은 건강에 관한 보고가 아니었다.", correct: "The trees started receiving thousands of emails, but many of them were not reports about damage or poor health." },
+                { isImportant: false, korean: "대신에, 그것들은 연애편지, 시, 인사말, 그리고 나무들에 대한 고마움을 표시하는 메시지들이었다.", correct: "Instead, they were love letters, poems, greetings, and messages expressing appreciation for the trees." },
+                { isImportant: true, korean: "나는 빛이 네 잎들 위에 비치는 방식과 네 가지들이 그렇게 낮게 매달려 있는 방식을 정말 좋아해.", correct: "I love the way the light shines on your leaves and how your branches hang so low." },
+                { isImportant: true, korean: "그것은 거의 네가 나를 껴안으려고 하는 것 같아.", correct: "It is almost like you are trying to hug me." },
+                { isImportant: false, korean: "나무 이메일 현상은 빠르게 퍼졌고, 전 세계의 사람들이 메시지들을 보내기 시작했다.", correct: "The tree mail phenomenon quickly spread, and people all over the world started sending messages." },
+                { isImportant: false, korean: "멀리 러시아에서 전송된 한 메시지는 '내가 이 멋진 프로젝트에 관해 읽었을 때, 나는 수천 마일 떨어져 사는데도 불구하고 너에게 (메시지를) 쓰도록 고무되었어'라고 쓰여 있었다.", correct: "A message that was sent all the way from Russia said, \"When I read about this wonderful project, I was inspired to write to you, even though I live thousands of miles away.\"" },
+                { isImportant: false, korean: "비록 우리가 엄청난 거리로 따로 떨어져 있기는 하지만, 우리는 같은 지구와 같은 환경을 공유해.", correct: "Although we are separated by a great distance, we share the same planet and the same environment." },
+                { isImportant: false, korean: "아마 언젠가 우리는 만나게 될 거야.", correct: "Perhaps one day we will meet." },
+                { isImportant: true, korean: "그때까지, 나는 네가 건강하고 튼튼하게 지내길 바라.", correct: "Until then, I hope you can stay healthy and strong." },
+                { isImportant: true, korean: "나무 이메일 현상의 세계적인 인기는 우리에게 우리가 모두 자연에 연결되어 있고, 우리는 모두 보다 지속 가능한 세상을 만드는 것에 관련되어 있다는 것을 일깨워 준다.", correct: "The global popularity of the tree mail phenomenon reminds us that we are all connected to nature, and (that) we are all involved in building a more sustainable world." },
+                { isImportant: true, korean: "전 세계 사람들로부터의 집단적인 행동이 없다면, 우리는 미래의 세대들을 위해 우리의 지구를 구할 희망을 거의 갖지 못할 것이다.", correct: "Without collective action from people across the globe, we would have little hope of saving our planet for future generations." },
+                { isImportant: true, korean: "지역적으로, 나무 이메일 현상은 많은 멜버른 주민들이 친환경적인 도시 환경을 조성하는 것에 관한 그들만의 생각들을 제안하도록 고무했다.", correct: "Locally, the tree mail phenomenon has inspired many Melbourne residents to offer their own ideas about building an environmentally friendly urban environment." },
+                { isImportant: false, korean: "일부는 심지어 도시 내의 자연 프로그램을 위해 나무들을 측정하고 동물들을 추적 관찰하는 일을 자원하기까지 했다.", correct: "Some have even volunteered to measure trees and monitor animals for nature programs in the city." },
+                { isImportant: false, korean: "한편, 도시숲 전략의 나무 심기 프로젝트는 계속 진행 중이며, 임관 피복도는 2012년에서의 23퍼센트에서 2040년까지 40퍼센트로 늘어날 것으로 예상된다.", correct: "Meanwhile, the Urban Forest Strategy's tree planting project has remained on track, and canopy cover is predicted to increase from 23 percent in 2012 to 40 percent by the year 2040." },
+                { isImportant: true, korean: "멜버른의 도시숲 전략은 도시를 시원하게 유지하는 데 도움이 될 것이다.", correct: "Melbourne's urban forest strategy will help keep the city cool." },
+                { isImportant: true, korean: "그것은 또한 주민들이 매일 자연과 소통하고 야외 활동들에 참여하게 해줄 것이다.", correct: "It will also allow residents to interact with nature and (to) engage in outdoor activities every day." },
+                { isImportant: true, korean: "결과적으로, 주민들은 그들이 더 환경친화적인 미래를 향해 나아가는 동안 더 행복하고 건강해질 것이다.", correct: "As a result, residents will be happier and healthier as they move toward a greener future." }
+            ],
+            lesson4: [
+                { isImportant: true, korean: "카메라가 장면을 포착하는 것만큼 빠르게, 이미지는 우리의 감정을 사로잡을 수 있다.", correct: "As quickly as a camera captures a scene, an image can grab hold of our emotions." },
+                { isImportant: true, korean: "연설이나 글로 쓰인 텍스트를 통해 복잡한 메시지를 빠르게 전달하는 것은 어려울 수 있다.", correct: "Through speech or written text, it can be difficult to convey a complex message quickly." },
+                { isImportant: false, korean: "그렇지만 사진은 사람들의 가슴과 마음을 순식간에 바꿀 수 있다.", correct: "Yet photographs can change people's hearts and minds in an instant." },
+                { isImportant: false, korean: "그리고 사진 촬영의 마법이 많은 사람들에게 감정적인 반응을 유발할 때, 그것은 역사를 바꿀 수 있다.", correct: "And when the magic of photography sparks an emotional reaction in a great number of people, it can change history." },
+                { isImportant: false, korean: "1880년대에, 산업이 클리블랜드 시의 쿠야호가 강을 따라 빠르게 성장하기 시작했다.", correct: "In the 1880s, industry began to grow rapidly along the Cuyahoga River in the city of Cleveland." },
+                { isImportant: false, korean: "이러한 산업 성장은 그 지역 사람들에게 안정적인 일자리를 제공했다.", correct: "This industrial growth provided steady jobs to people in the area." },
+                { isImportant: false, korean: "한편, 제철소의 공장은 대량의 폐기물을 강에 버리기 시작했다.", correct: "Meanwhile, steel mills and factories started dumping large amounts of waste into the river." },
+                { isImportant: false, korean: "비록 강이 오염되긴 했지만, 대부분의 사람들은 이를 단순히 그 지역의 경제적 성공의 신호로 여겼다.", correct: "Although the river became polluted, most people simply regarded this as a sign of the area's economic success." },
+                { isImportant: false, korean: "1969년 6월, 그 오염된 강에 불이 붙었다.", correct: "In June 1969, the polluted river caught fire." },
+                { isImportant: true, korean: "가능성 있는 원인은 열차에서 떨어지던 타오르는 불꽃이었고, 그것은 다리 밑의 기름에 흠뻑 젖은 폐기물에 불을 붙였다.", correct: "The likely cause was a burning flare falling from a train, which set fire to oil-soaked waste beneath a bridge." },
+                { isImportant: false, korean: "당시 클리블랜드에는 관심을 가지는 사람이 거의 없었다.", correct: "At that time, few people in Cleveland cared." },
+                { isImportant: true, korean: "이것은 이전에 쿠야호가에서 열 번 넘는 화재가 기록되었고, 그것들 중 일부는 훨씬 더 심했었기 때문이다.", correct: "This was because fires had been recorded on the Cuyahoga more than ten times before, and some of them had been much worse." },
+                { isImportant: false, korean: "하지만 머지않아 1969년의 화재가 유명해졌다.", correct: "However, it wasn't long before the 1969 fire became famous." },
+                { isImportant: false, korean: "이것은 그해 타임지에 실린 기사 덕분이었다.", correct: "This was thanks to an article published in Time magazine that year." },
+                { isImportant: false, korean: "그 기사는 강에서 피어오르는 불길과 연기의 충격적인 사진을 특종으로 다뤘다.", correct: "The article featured a shocking photograph of flames and smoke rising from the river." },
+                { isImportant: true, korean: "그러나 이것은 1969년 화재의 사진이 아니었는데, 그것은 너무 빨리 진압되어 아무도 그것의 사진을 찍지 못했다.", correct: "But this was not a photograph of the 1969 fire, which was put out so quickly that nobody took a picture of it." },
+                { isImportant: true, korean: "사실, 그것은 몇 년 전에 그 강에서 발생했던 훨씬 더 심한 화재의 사진이었다.", correct: "In fact, it was a picture of a much worse fire that had occurred on the river several years earlier." },
+                { isImportant: false, korean: "그럼에도 불구하고 그 이미지는 사람들에게 큰 영향을 주었다.", correct: "Still, the image had a great impact on people." },
+                { isImportant: false, korean: "그 무렵, 환경 문제에 대한 미국인들의 태도가 바뀌기 시작하고 있었다.", correct: "Around that time, the attitudes of Americans toward environmental problems were starting to change." },
+                { isImportant: false, korean: "점점 더 많은 사람들이 환경을 보호할 필요성을 인지하게 되는 중이었고, 불타는 강의 충격적인 이미지는 수질 오염에 대한 대중의 분노를 촉발시켰다.", correct: "More and more people were becoming aware of the need to protect the environment, and the shocking image of the burning river sparked public anger about water pollution." },
+                { isImportant: false, korean: "그 결과, 1969년 쿠야호가 강 화재는 오염의 상징이 되었다.", correct: "As a result, the Cuyahoga River fire of 1969 became a symbol of pollution." },
+                { isImportant: true, korean: "전국적인 환경 의식 행사가 1970년 4월 22일에 열렸는데, 이날은 이후 제 1회 지구의 날로 알려지게 되었다.", correct: "A national environmental awareness event was held on April 22, 1970, which later became known as the first Earth Day." },
+                { isImportant: false, korean: "그리고 1972년, 청정수법의 통과와 함께 국가 수질 기준이 수립되었다.", correct: "And in 1972, national water quality standards were established with the passage of the Clean Water Act." },
+                { isImportant: false, korean: "19세기에, 산업혁명은 미국의 공장 생산량의 극적인 증가로 이어졌다.", correct: "In the 19th century, the Industrial Revolution led to a dramatic increase in factory production in the United States." },
+                { isImportant: false, korean: "노동자에 대한 수요가 증가했고, 많은 새로운 일자리들이 아동들로 채워졌다.", correct: "The demand for workers increased, and many new positions were filled by children." },
+                { isImportant: false, korean: "1900년쯤에는, 미국의 전체 아동의 약 20퍼센트가 고용되었고, 공장에서 일하는 아동 중 일부는 겨우 4살이었다.", correct: "By 1900, about twenty percent of all children in the United States were employed, and some of those working in factories were only four years old." },
+                { isImportant: true, korean: "일은 힘들고 위험해서 많은 아동 노동자들에게 건강문제를 남겼다.", correct: "The work was difficult and dangerous, leaving many child laborers with health problems." },
+                { isImportant: false, korean: "공장주들은 여러 가지 이유로 아동 노동에 의존했다.", correct: "Factory owners turned to child labor for several reasons." },
+                { isImportant: true, korean: "예를 들어, 아이들은 성인 노동자보다 임금을 적게 받을 수 있었다.", correct: "For example, children could be paid less than adult workers." },
+                { isImportant: false, korean: "그들은 또한 파업할 가능성도 더 적었다.", correct: "They were also less likely to go on strike." },
+                { isImportant: true, korean: "교사이자 사진작가인 루이스 하인은 이 제도가 얼마나 잔인한지 밝히고 싶었다.", correct: "Lewis Hine, a teacher and photographer, wanted to reveal how cruel this system was." },
+                { isImportant: false, korean: "그래서 그는 교사직을 그만두고 전국아동노동위원회에서 탐사 사진작가로 일하기 시작했다.", correct: "So he quit his teaching job and started to work for the National Child Labor Committee as an investigative photographer." },
+                { isImportant: false, korean: "그는 보험 설계사나 화재 조사관 같은 다른 직업들을 가진 것처럼 가장함으로써 공장에 접근했다.", correct: "He gained access to factories by pretending to have different jobs like insurance agent or fire inspector." },
+                { isImportant: false, korean: "일단 안에 들어가면, 그는 그곳에서 일하는 아이들의 사진을 찍었다.", correct: "Once inside, he would photograph the children working there." },
+                { isImportant: false, korean: "그는 또한 그들의 이름과 나이를 묻고 그들의 생활과 노동 환경에 대한 정보를 기록했다.", correct: "He would also ask their names and ages and record information about their living and working conditions." },
+                { isImportant: true, korean: "1908년부터 1912년까지, 그는 무력한 아이들을 이용하고 있던 공장주들을 폭로하기 위해 몰래 정보를 수집하고 사진을 찍었다.", correct: "From 1908 to 1912, he secretly gathered information and took photographs to expose factory owners who were taking advantage of helpless children." },
+                { isImportant: false, korean: "하인의 사진들을 온갖 종류의 일을 하는 어린이들을 포착했다.", correct: "Hine's photographs captured young children doing all sorts of jobs." },
+                { isImportant: false, korean: "이것들은 채소 따기, 바구니 짜기, 그리고 심지어 위험한 장비를 다루는 일까지 포함했다.", correct: "These included picking vegetables, weaving baskets, and even handling dangerous equipment." },
+                { isImportant: false, korean: "게다가, 그 아이들의 얼굴은 고된 노동의 비극적인 영향을 보여주었다.", correct: "What is more, the children's faces showed the tragic impact of hard labor." },
+                { isImportant: true, korean: "사람들이 그 아이들의 기쁨이 없는 표정을 보았을 때, 그들은 비통함을 느끼지 않을 수 없었다.", correct: "When people saw the children's joyless expressions, they could not help but feel heartbroken." },
+                { isImportant: false, korean: "그 사진들을 이후 전시회, 강연, 잡지 기사 등에 공개되었다.", correct: "The pictures were later shown in exhibitions, lectures, magazine articles, and so on." },
+                { isImportant: true, korean: "그 결과, 대중은 상황이 얼마나 심각한지 깨달았다.", correct: "As a result, the public realized just how serious the situation was." },
+                { isImportant: false, korean: "곧, 많은 주가 아동 고용을 금지하기 위해 더 강력한 법안들을 통과시켰다.", correct: "Soon, many states passed stronger laws to ban the employment of children." },
+                { isImportant: true, korean: "1938년에, 미국 의회는 16세 미만 아동이 학교 수업 시간 동안 공장에서 일하는 것을 불법으로 하는 법안을 통과시켰다.", correct: "In 1938, the United States Congress passed an act that made it illegal for children under sixteen to work in factories during school hours." },
+                { isImportant: true, korean: "이러한 사례들은 사진이 의미 있는 변화를 사회에 가져올 수 있음을 보여준다.", correct: "These examples show that photographs can bring meaningful change to society." },
+                { isImportant: true, korean: "그것들은 때로는 한 장의 사진이 진정 천 단어의 가치가 있다는 것을 증명한다.", correct: "They prove that, sometimes, a picture truly is worth a thousand words." }
+            ]
+        };
+
+        // 데이터 가공
+        const problemsData = {};
+        Object.keys(rawData).forEach(lessonKey => {
+            problemsData[lessonKey] = {
+                // Scramble (어순배열): isImportant=true (핵심 문장)만 사용
+                scramble: rawData[lessonKey].filter(item => item.isImportant).map(item => ({
+                    ...item,
+                    words: processSentenceToWords(item.correct)
+                })),
+                // Full Composition (전문장 영작): 모든 문장 사용
+                fullComposition: rawData[lessonKey].map(item => ({...item}))
+            };
+        });
+
+        const buildProblemSet = () => {
+            const problemsWithIds = {};
+            Object.keys(problemsData).forEach(lessonKey => {
+                problemsWithIds[lessonKey] = {};
+                Object.keys(problemsData[lessonKey]).forEach(typeKey => {
+                    problemsWithIds[lessonKey][typeKey] = problemsData[lessonKey][typeKey].map((problem, index) => ({
+                        ...problem,
+                        id: `${lessonKey}-${typeKey}-${index}`,
+                        lesson: lessonKey
+                    }));
+                });
+            });
+            return { problemsWithIds };
+        };
+
+        const { problemsWithIds } = buildProblemSet();
+
+        const quotes = [
+            { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+            { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+            { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+        ];
+        
+        // --- 유틸리티 함수 ---
+        const shuffleArray = (array) => {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        };
+
+        const normalizeString = (str) => {
+            if (!str) return '';
+            return str.toLowerCase().replace(/[.,?!"“”'‘’`-]/g, '').replace(/\s\s+/g, ' ').trim();
+        };
+        
+        const checkCompositionAnswer = (userInput, correctAnswer) => {
+            const userFirstChar = userInput.trim().charAt(0).toLowerCase();
+            const correctFirstChar = correctAnswer.trim().charAt(0).toLowerCase();
+            const userRest = userInput.trim().substring(1);
+            const correctRest = correctAnswer.trim().substring(1);
+            const isFirstCharMatch = userFirstChar === correctFirstChar;
+            const isRestMatch = normalizeString(userRest) === normalizeString(correctRest);
+
+            if (isFirstCharMatch && isRestMatch) return true;
+            return normalizeString(userInput) === normalizeString(correctAnswer);
+        };
+        
+        // --- 컴포넌트 ---
+        const HowToUseModal = ({ closeModal }) => (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4 transition-opacity">
+                <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all scale-95 animate-scale-in max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">✨ 영어 학습 앱 사용 설명서 ✨</h2>
+                        <button onClick={closeModal} className="text-gray-500 hover:text-gray-800">&times;</button>
+                    </div>
+
+                    <div className="space-y-6 text-gray-700">
+                        <div>
+                            <h3 className="text-xl font-bold text-primary mb-2">1. 🧐 핵심문장 확인하기</h3>
+                             <p className="mb-3">각 과의 <b>핵심문장</b>들을 한눈에 보며 빠르게 복습합니다.</p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-primary mb-2">2. 💪🏻 연습하기</h3>
+                            <p className="mb-3">실전 테스트 부담 없이 정답을 확인하며 공부합니다.</p>
+                            <ul className="list-disc pl-5">
+                                <li>🔀 핵심문장 어순배열 연습: <b>핵심 문장</b>의 단어를 순서대로 나열합니다.</li>
+                                <li>🖋️ 전문장 영작 연습: <b>모든 문장</b>을 영작합니다.</li>
+                                <li>🧩 전문장 어순배열 연습: <b>모든 문장</b>을 어순배열로 연습합니다.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-primary mb-2">3. 📝 테스트</h3>
+                            <p className="mb-3">시험을 보고 점수를 확인합니다.</p>
+                             <ul className="list-disc pl-5">
+                                <li>🔀 핵심문장 어순배열 테스트: <b>핵심 문장</b>을 순서대로 나열하는 시험입니다.</li>
+                                <li>🔥 전문장 영작 테스트: <b>모든 문장</b>을 영작하는 시험입니다.</li>
+                                <li>📋 선택 문장 테스트: 원하는 문장만 골라서 시험을 봅니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button onClick={closeModal} className="mt-8 w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md hover:shadow-lg">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        );
+      
+        const Sidebar = ({ currentView, setView, setShowModal, isOpen, closeSidebar }) => {
+            const menuItems = [
+                { id: 'review', icon: '🧐', name: '영작 포인트' },
+                { id: 'practice', icon: '💪🏻', name: '연습하기' },
+                { id: 'test', icon: '📝', name: '테스트' },
+            ];
+            
+            return (
+                <>
+                    {isOpen && (
+                        <div onClick={closeSidebar} className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"></div>
+                    )}
+                    
+                    <div className={`fixed inset-y-0 left-0 z-30 w-72 bg-white p-6 flex flex-col h-full border-r border-slate-200 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:flex-shrink-0`}>
+                        <button onClick={closeSidebar} className="md:hidden absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <div className="mb-10 text-center cursor-pointer" onClick={() => { setView({ main: 'home' }); closeSidebar(); }}>
+                            <h1 className="text-md font-bold text-primary">✨ 에이닷 영어학원 송탄점 ✨</h1>
+                            <p className="text-2xl font-bold text-slate-800 mt-1">공통영어1 능률(오선영)</p>
+                            <p className="text-sm font-semibold text-slate-500 mt-1">1-4과</p>
+                        </div>
+                        <nav className="flex flex-col space-y-3">
+                                {menuItems.map(item => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => { setView({ main: item.id }); closeSidebar(); }}
+                                    className={`w-full px-4 py-3 rounded-lg transition-colors text-lg font-semibold flex flex-col items-center justify-center h-28 ${currentView.main === item.id ? 'bg-blue-50 text-primary' : 'text-slate-600 hover:bg-slate-100'}`}
+                            >
+                                <span className="text-4xl mb-1">{item.icon}</span>
+                                <span>{item.name}</span>
+                            </button>
+                        ))}
+                    </nav>
+                    <div className="mt-auto text-center">
+                        <button onClick={() => setShowModal(true)} className="text-sm font-semibold text-slate-500 hover:text-primary transition">
+                            사용법 보기 ❓
+                        </button>
+                    </div>
+                    </div>
+                </>
+            );
+        };
+        
+        const WelcomeScreen = ({ setShowModal }) => {
+             const [quote, setQuote] = useState({ text: '', author: '' });
+            useEffect(() => { setQuote(quotes[Math.floor(Math.random() * quotes.length)]); }, []);
+
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    <h2 className="text-4xl font-bold text-slate-800 mb-4">영작 연습을 시작해 보세요</h2>
+                    <p className="text-lg text-slate-500 mb-8">왼쪽 메뉴에서 학습 유형을 선택하세요.</p>
+                    <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-slate-200 w-full max-w-md md:max-w-2xl">
+                        <p className="text-xl text-slate-600 md:whitespace-nowrap">"{quote.text}"</p>
+                        <p className="text-md text-slate-400 mt-2">- {quote.author}</p>
+                    </div>
+                     <button onClick={() => setShowModal(true)} className="px-6 py-2 bg-white border border-slate-300 rounded-full text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        사용법 보기 ❓
+                    </button>
+                </div>
+            );
+        };
+
+        const SubMenuScreen = ({ title, icon, items, onItemClick }) => (
+            <div className="p-8 h-full flex flex-col justify-center animate-scale-in">
+                <div className="w-full max-w-2xl mx-auto">
+                    <h2 className="text-3xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                        <span className="text-4xl">{icon}</span>
+                        {title}
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {items.map(item => (
+                            <button
+                                key={item.name}
+                                onClick={() => onItemClick(item.payload)}
+                                className="w-full text-left p-4 bg-white rounded-xl shadow-sm hover:shadow-md hover:bg-slate-50 border border-slate-200 transition-all transform hover:-translate-y-0.5 flex items-center"
+                            >
+                                <span className="text-2xl mr-4">{item.icon}</span>
+                                <span className="font-semibold text-slate-700">{item.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const ReviewScreen = ({ problems, backToMenu }) => {
+            return (
+                <div className="p-4 sm:p-8 flex flex-col h-full bg-slate-50">
+                    <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                        <h1 className="text-2xl font-bold text-slate-900">🧐 영작 포인트 확인하기</h1>
+                        <button onClick={backToMenu} className="bg-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-100 transition text-sm shadow border border-slate-200">← 뒤로가기</button>
+                    </div>
+                    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 flex-grow overflow-y-auto">
+                        <ul className="space-y-4">
+                            {problems.length > 0 ? problems.map((p, index) => (
+                                <li key={p.id || index} className="p-4 rounded-lg bg-slate-50 border-l-4 border-primary">
+                                    <p className="font-bold text-slate-800"><span className="text-slate-400 mr-2">{p.lesson.replace('lesson', '')}과</span>{p.korean}</p>
+                                    <p className="text-primary mt-1 font-medium">{p.correct}</p>
+                                </li>
+                            )) : <p className="text-slate-500">표시할 문제가 없습니다.</p>}
+                        </ul>
+                    </div>
+                </div>
+            );
+        };
+        
+        const LessonSelectionScreen = ({ selection, setQuizOptions, backToMenu }) => {
+            const { mode, type } = selection;
+            const [selectedLessons, setSelectedLessons] = useState([]);
+            const [numQuestions, setNumQuestions] = useState(10);
+            const availableLessons = useMemo(() => Object.keys(problemsData).map(key => key.replace('lesson', '')), []);
+
+            const typeLabels = {
+                scramble: '핵심문장 어순배열',
+                fullComposition: '전문장 영작',
+                fullCompositionScramble: '전문장 어순배열'
+            };
+            const title = mode === 'practice' 
+                ? `${typeLabels[type]} 연습` 
+                : `${typeLabels[type]} 테스트`;
+
+            const handleLessonToggle = (lesson) => {
+                setSelectedLessons(prev =>
+                    prev.includes(lesson)
+                        ? prev.filter(l => l !== lesson)
+                        : [...prev, lesson]
+                );
+            };
+
+            const startQuiz = (options = {}) => {
+                if (selectedLessons.length === 0) {
+                    alert("과를 먼저 선택해주세요.");
+                    return;
+                }
+
+                const sortedLessons = [...selectedLessons].sort((a, b) => a - b);
+                let problemType = type;
+                
+                let sourceKey = type;
+                if (type === 'fullCompositionScramble') sourceKey = 'fullComposition';
+
+                let problems = [];
+                sortedLessons.forEach(lessonNum => {
+                    const key = `lesson${lessonNum}`;
+                    if (problemsWithIds[key] && problemsWithIds[key][sourceKey]) {
+                        problems.push(...problemsWithIds[key][sourceKey]);
+                    }
+                });
+
+                // fullCompositionScramble인 경우, words가 없을 수 있으므로 처리
+                if (type === 'fullCompositionScramble') {
+                     problems = problems.map(p => ({
+                         ...p,
+                         words: processSentenceToWords(p.correct)
+                     }));
+                }
+
+                if (problems.length === 0) {
+                    alert('선택한 과에 학습할 문제가 없습니다.');
+                    return;
+                }
+                
+                if (mode === 'practice') {
+                    if (options.isRandom) problems = shuffleArray(problems);
+                    setQuizOptions({ ...selection, problems, lessons: sortedLessons, random: options.isRandom });
+                } else if (mode === 'test') {
+                    if(numQuestions > problems.length) {
+                        alert(`선택한 과의 전체 문제 수(${problems.length}개)가 설정한 문제 수(${numQuestions}개)보다 적습니다. 가능한 문제 수로 테스트를 시작합니다.`);
+                    }
+                    const randomProblems = shuffleArray(problems).slice(0, numQuestions);
+                    setQuizOptions({ ...selection, problems: randomProblems });
+                }
+            };
+
+            return (
+                <div className="p-8 flex items-center justify-center h-full animate-scale-in">
+                    <div className="w-full max-w-3xl bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                        <button onClick={backToMenu} className="mb-4 text-sm font-semibold text-slate-500 hover:text-primary">← 뒤로가기</button>
+                        <h1 className="text-3xl font-bold text-center mb-2 text-slate-900">{title}</h1>
+                        <p className="text-center text-slate-500 mb-8">학습할 과를 모두 선택하세요.</p>
+                        
+                        <div className="flex justify-center flex-wrap gap-4 mb-8">
+                            {availableLessons.map(lesson => {
+                                const isSelected = selectedLessons.includes(lesson);
+                                return (
+                                    <button 
+                                        key={lesson} 
+                                        onClick={() => handleLessonToggle(lesson)}
+                                        className={`px-6 py-3 text-lg font-bold rounded-lg transition-transform transform hover:scale-105 ${isSelected ? 'bg-primary text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                    >
+                                        {lesson}과
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {mode === 'test' && (
+                            <div className="mb-8 flex items-center justify-center gap-4">
+                                <label htmlFor="numQuestions" className="font-semibold text-slate-600">문제 수:</label>
+                                <input
+                                    type="number"
+                                    id="numQuestions"
+                                    value={numQuestions}
+                                    onChange={(e) => setNumQuestions(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="w-24 p-2 bg-white border border-slate-300 rounded-md text-slate-900 text-center focus:ring-primary focus:border-primary"
+                                />
+                            </div>
+                        )}
+                        
+                        {mode === 'practice' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button onClick={() => startQuiz({ isRandom: false })} className="w-full p-4 bg-primary text-white rounded-lg hover:bg-blue-600 font-bold text-lg transition shadow-md disabled:opacity-50" disabled={selectedLessons.length === 0}>순서대로 시작</button>
+                                <button onClick={() => startQuiz({ isRandom: true })} className="w-full p-4 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-md disabled:opacity-50" disabled={selectedLessons.length === 0}>랜덤으로 시작</button>
+                            </div>
+                        ) : (
+                            <button onClick={() => startQuiz()} className="w-full p-4 bg-primary text-white rounded-lg hover:bg-blue-600 font-bold text-lg transition shadow-md disabled:opacity-50" disabled={selectedLessons.length === 0}>테스트 시작</button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        
+        const SelectiveTestScreen = ({ linkedProblems, setQuizOptions, backToMenu }) => {
+            const [selectedProblems, setSelectedProblems] = useState([]);
+            const [lessonFilter, setLessonFilter] = useState('all');
+            const [sentenceTypeFilter, setSentenceTypeFilter] = useState('all'); 
+            
+            const availableLessons = useMemo(() => [...new Set(linkedProblems.map(p => p.lesson))], [linkedProblems]);
+
+            const filteredProblems = useMemo(() => {
+                return linkedProblems.filter(p => {
+                    const lessonMatch = lessonFilter === 'all' || p.lesson === lessonFilter;
+                    const typeMatch = sentenceTypeFilter === 'all' 
+                        ? true 
+                        : (sentenceTypeFilter === 'important' ? p.isImportant : !p.isImportant);
+                    return lessonMatch && typeMatch;
+                });
+            }, [lessonFilter, sentenceTypeFilter, linkedProblems]);
+
+            const handleToggle = (problem) => {
+                setSelectedProblems(prev =>
+                    prev.some(p => p.id === problem.id)
+                        ? prev.filter(p => p.id !== problem.id)
+                        : [...prev, problem]
+                );
+            };
+
+            const handleStartTest = (testType) => {
+                if (selectedProblems.length === 0) {
+                    alert("테스트할 문장을 먼저 선택해주세요.");
+                    return;
+                }
+                
+                let problems = [...selectedProblems];
+                
+                if (testType === 'scramble') {
+                    problems = problems.map(p => ({
+                        ...p,
+                        words: processSentenceToWords(p.correct)
+                    }));
+                }
+
+                setQuizOptions({
+                    mode: 'test',
+                    type: testType,
+                    problems: shuffleArray(problems)
+                });
+            };
+
+            return (
+                <div className="p-4 sm:p-8 flex flex-col h-full bg-slate-50 animate-scale-in">
+                    <div className="flex justify-between items-center mb-4">
+                         <h1 className="text-2xl font-bold text-slate-900">📋 선택 문장 테스트</h1>
+                         <button onClick={backToMenu} className="bg-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-100 transition text-sm shadow border border-slate-200">← 뒤로가기</button>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 sticky top-4 z-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-semibold text-slate-600">과 선택:</label>
+                                <select value={lessonFilter} onChange={e => setLessonFilter(e.target.value)} className="w-full mt-1 p-2 border border-slate-300 rounded-md">
+                                    <option value="all">전체</option>
+                                    {availableLessons.map(l => <option key={l} value={l}>{l.replace('lesson', '')}과</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-sm font-semibold text-slate-600">문장 유형:</label>
+                                <select value={sentenceTypeFilter} onChange={e => setSentenceTypeFilter(e.target.value)} className="w-full mt-1 p-2 border border-slate-300 rounded-md">
+                                    <option value="all">모든 문장</option>
+                                    <option value="important">핵심 문장 (영작 포인트)</option>
+                                    <option value="normal">일반 문장</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2 justify-between items-center">
+                            <p className="font-semibold text-primary">{selectedProblems.length}개 문장 선택됨</p>
+                            <div className="flex flex-wrap gap-2">
+                                <button onClick={() => handleStartTest('scramble')} disabled={selectedProblems.length === 0} className="px-3 py-2 text-sm bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition disabled:opacity-50">핵심문장 어순배열 테스트</button>
+                                <button onClick={() => handleStartTest('fullComposition')} disabled={selectedProblems.length === 0} className="px-3 py-2 text-sm bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition disabled:opacity-50">영작 테스트</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex-grow overflow-y-auto">
+                        <div className="space-y-3">
+                            {filteredProblems.length > 0 ? filteredProblems.map(problem => (
+                                <div key={problem.id} className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition ${selectedProblems.some(p => p.id === problem.id) ? 'bg-blue-50' : 'hover:bg-slate-50'}`} onClick={() => handleToggle(problem)}>
+                                    <input type="checkbox" checked={selectedProblems.some(p => p.id === problem.id)} readOnly className="mt-1 h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary"/>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {problem.isImportant && <span className="text-xs font-bold text-white bg-accent px-2 py-0.5 rounded-full">핵심</span>}
+                                            <span className="text-xs font-bold text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full">{problem.lesson.replace('lesson', '')}과</span>
+                                        </div>
+                                        <p className="font-semibold text-slate-800">{problem.korean}</p>
+                                        <p className="text-sm text-primary mt-1 font-medium">{problem.correct}</p>
+                                    </div>
+                                </div>
+                            )) : <div className="text-center p-8 text-slate-500">표시할 문장이 없습니다.</div>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const QuizScreen = ({ options, backToMenu, restartQuiz }) => {
+            const [questions, setQuestions] = useState([]);
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [userAnswers, setUserAnswers] = useState([]);
+            const [showResults, setShowResults] = useState(false);
+            const [quizKey, setQuizKey] = useState(Date.now());
+            
+            useEffect(() => {
+                setQuestions(options.problems || []);
+                setUserAnswers(new Array((options.problems || []).length).fill(null));
+                setCurrentQIndex(0);
+                setShowResults(false);
+                setQuizKey(Date.now());
+            }, [options]);
+
+            const handleAnswer = useCallback((answer, isCorrect) => {
+                setUserAnswers(prev => {
+                    const newAnswers = [...prev];
+                    newAnswers[currentQIndex] = { answer, isCorrect };
+                    return newAnswers;
+                });
+            }, [currentQIndex]);
+
+            const goToNext = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                } else {
+                    if (options.mode === 'test') {
+                        setShowResults(true);
+                    } else {
+                        alert("마지막 문제입니다!");
+                    }
+                }
+            };
+            const goToPrev = () => {
+                if (currentQIndex > 0) {
+                    setCurrentQIndex(currentQIndex - 1);
+                }
+            };
+            if (questions.length === 0) return <div>문제가 없습니다.</div>;
+
+            if (showResults) {
+                return <ResultScreen questions={questions} userAnswers={userAnswers} backToMenu={backToMenu} restartQuiz={restartQuiz} />;
+            }
+
+            const currentQuestion = questions[currentQIndex];
+            const renderQuizType = () => {
+                const quizProps = {
+                    key: quizKey + '-' + currentQIndex,
+                    question: currentQuestion,
+                    options: options,
+                    onAnswer: handleAnswer,
+                };
+                switch (options.type) {
+                    case 'scramble':
+                    case 'fullCompositionScramble':
+                        return <ScrambleQuiz {...quizProps} />;
+                    case 'fullComposition':
+                        return <CompositionQuiz {...quizProps} />;
+                    default:
+                        return <div>선택된 문제 유형이 없습니다.</div>;
+                }
+            };
+
+            return (
+                <div className="p-4 sm:p-8 flex flex-col h-full bg-slate-50">
+                    <div className="flex justify-between items-center mb-6">
+                        <button onClick={backToMenu} className="bg-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-100 transition text-sm shadow border border-slate-200">← 뒤로가기</button>
+                        <div className="text-lg font-bold bg-white px-4 py-1 rounded-full text-slate-700 shadow-sm border border-slate-200">
+                            {`${currentQIndex + 1} / ${questions.length}`}
+                        </div>
+                    </div>
+                    
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 flex-grow">
+                        {renderQuizType()}
+                    </div>
+
+                    <div className="flex mt-6 justify-between items-center">
+                        {options.mode === 'practice' ? (
+                            <button onClick={goToPrev} disabled={currentQIndex === 0} className="px-6 py-3 rounded-lg bg-slate-200 text-slate-800 font-bold hover:bg-slate-300 disabled:opacity-50">이전</button>
+                        ) : (
+                            <div></div> 
+                        )}
+                        <button onClick={goToNext} className={`px-6 py-3 rounded-lg bg-primary text-white font-bold hover:bg-blue-600`}>
+                            {currentQIndex === questions.length - 1 ? (options.mode === 'test' ? '결과 보기' : '마지막 문제') : '다음'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+        
+        const ScrambleQuiz = ({ question, options, onAnswer }) => {
+            const initialShuffledWords = useMemo(() => {
+                if (!question.words) return [];
+                return shuffleArray(question.words.map((word, index) => ({ word, originalIndex: index })));
+            }, [question]);
+
+            const [answerWords, setAnswerWords] = useState([]);
+            const [hiddenIndexes, setHiddenIndexes] = useState([]);
+            const [result, setResult] = useState(null);
+            const isAnswered = result !== null;
+
+            useEffect(() => {
+                if (options.mode === 'test') {
+                    const userAnswer = answerWords.map(item => item.word).join(' ');
+                    const normalizedUser = normalizeString(userAnswer);
+                    const normalizedCorrect = normalizeString(question.correct);
+                    const isCorrect = normalizedUser === normalizedCorrect;
+                    onAnswer(userAnswer, isCorrect);
+                }
+            }, [answerWords, options.mode, question.correct, onAnswer]);
+            
+            const selectWord = (wordItem) => {
+                if (options.mode === 'practice' && isAnswered) return;
+                setAnswerWords([...answerWords, wordItem]);
+                setHiddenIndexes([...hiddenIndexes, wordItem.originalIndex]);
+            };
+
+            const removeWord = (itemToRemove, indexInAnswer) => {
+                if (options.mode === 'practice' && isAnswered) return;
+                setAnswerWords(answerWords.filter((_, i) => i !== indexInAnswer));
+                setHiddenIndexes(hiddenIndexes.filter(i => i !== itemToRemove.originalIndex));
+            };
+            
+            const checkAnswer = () => {
+                if (answerWords.length === 0) return;
+                const userAnswer = answerWords.map(item => item.word).join(' ');
+                const isCorrect = normalizeString(userAnswer) === normalizeString(question.correct);
+                setResult(isCorrect);
+                onAnswer(userAnswer, isCorrect);
+            };
+            const resetAnswer = () => {
+                setAnswerWords([]);
+                setHiddenIndexes([]);
+                setResult(null);
+                onAnswer(null, false);
+            };
+
+            return (
+                <div className="flex flex-col h-full">
+                    <p className="text-md font-medium text-slate-500 mb-2">
+                        {options.type === 'fullCompositionScramble' ? '전문장 어순배열 연습' : '핵심 문장 어순배열'} (문장 부호 제외)
+                    </p>
+                    <p className="text-xl font-bold text-slate-900 mb-6 p-4 bg-slate-100 rounded-lg">"{question.korean}"</p>
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg min-h-[120px]">
+                        <p className="font-semibold text-sm text-slate-500 mb-3">단어 보기</p>
+                        <div className="flex flex-wrap gap-2">
+                            {initialShuffledWords.map((wordItem, index) => (
+                                <button 
+                                    key={index} 
+                                    onClick={() => selectWord(wordItem)} 
+                                    className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-md font-semibold hover:bg-slate-100 transition"
+                                    style={{ visibility: hiddenIndexes.includes(wordItem.originalIndex) ? 'hidden' : 'visible' }}
+                                    disabled={options.mode === 'practice' && isAnswered}
+                                >
+                                    {wordItem.word}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-lg min-h-[120px] bg-blue-50/50">
+                        <p className="font-semibold text-sm text-slate-500 mb-3">정답 영역</p>
+                        <div className="flex flex-wrap gap-2">
+                            {answerWords.map((item, index) => (
+                                <button 
+                                    key={index} 
+                                    onClick={() => removeWord(item, index)} 
+                                    className="px-3 py-1.5 bg-primary text-white rounded-md font-semibold hover:bg-blue-600 transition"
+                                    disabled={options.mode === 'practice' && isAnswered}
+                                >
+                                    {item.word}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-auto pt-6">
+                        {options.mode === 'practice' ? (
+                            <div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={checkAnswer} className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition disabled:opacity-50" disabled={isAnswered}>정답 확인</button>
+                                    <button onClick={resetAnswer} className="w-full py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition">초기화</button>
+                                </div>
+                                {result !== null && (
+                                    <div className={`mt-4 p-4 rounded-lg ${result ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
+                                        <p className="font-bold text-lg">{result ? '✅ 정답입니다!' : '❌ 틀렸습니다.'}</p>
+                                        <p className="mt-2"><b>정답:</b> {question.correct}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex justify-end">
+                                <button onClick={resetAnswer} className="py-2 px-4 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition">초기화</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        
+        const CompositionQuiz = ({ question, options, onAnswer }) => {
+            const [userInput, setUserInput] = useState('');
+            const [result, setResult] = useState(null);
+            const isAnswered = result !== null;
+            const instructionText = "다음 주어진 우리말에 맞게 영작하세요.";
+
+            const renderDiff = (userInput, correct) => {
+                const userWords = userInput.trim().split(/\s+/);
+                const correctWords = correct.trim().split(/\s+/);
+
+                return (
+                    <div>
+                        <p className="font-semibold">내 답안:</p>
+                        <p className="p-2 rounded bg-slate-50 leading-relaxed">
+                            {userWords.map((word, index) => {
+                                const isCorrect = index < correctWords.length && normalizeString(word) === normalizeString(correctWords[index]);
+                                return <span key={index} className={isCorrect ? 'text-green-700' : 'text-red-700 line-through'}>{word} </span>
+                            })}
+                        </p>
+                        <p className="mt-2 font-semibold">정답:</p>
+                        <p className="p-2 rounded bg-green-50 text-green-800 leading-relaxed">{correct}</p>
+                    </div>
+                );
+            };
+
+            useEffect(() => {
+                if (options.mode === 'test') {
+                    const isCorrect = checkCompositionAnswer(userInput, question.correct);
+                    onAnswer(userInput, isCorrect);
+                }
+            }, [userInput, options.mode, question.correct, onAnswer]);
+
+            const checkAnswer = () => {
+                if (!userInput.trim()) return;
+                const isCorrect = checkCompositionAnswer(userInput, question.correct);
+                setResult(isCorrect);
+                onAnswer(userInput, isCorrect);
+            };
+            const resetAnswer = () => {
+                setUserInput('');
+                setResult(null);
+                onAnswer(null, false);
+            };
+            
+            const handleKeyDown = (e) => {
+                if (e.key === 'Tab') e.preventDefault();
+            };
+
+            return (
+                <div className="flex flex-col h-full">
+                    <p className="text-md font-medium text-slate-500 mb-2">{instructionText}</p>
+                    <div className="p-4 bg-slate-100 rounded-lg mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            {question.isImportant && <span className="text-xs font-bold text-white bg-accent px-2 py-0.5 rounded-full">핵심</span>}
+                        </div>
+                        <p className="text-xl font-bold text-slate-900">"{question.korean}"</p>
+                    </div>
+                    <textarea 
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={options.mode === 'practice' && isAnswered}
+                        className="w-full p-3 bg-white border-2 border-slate-300 rounded-lg text-lg text-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition flex-grow"
+                        rows="5"
+                        placeholder="여기에 영어 문장을 입력하세요..."
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                    />
+                    <div className="mt-auto pt-6">
+                        {options.mode === 'practice' ? (
+                            <div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={checkAnswer} className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition disabled:opacity-50" disabled={isAnswered}>정답 확인</button>
+                                    <button onClick={resetAnswer} className="w-full py-3 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition">초기화</button>
+                                </div>
+                                {result !== null && (
+                                    <div className={`mt-4 p-4 rounded-lg ${result ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 border border-red-200'}`}>
+                                        <p className="font-bold text-lg">{result ? '✅ 정답입니다!' : '❌ 틀렸습니다.'}</p>
+                                        {result ? (
+                                            <p className="mt-2 text-green-800"><b>정답:</b> {question.correct}</p>
+                                        ) : (
+                                            <div className="mt-2 text-red-800">
+                                                {renderDiff(userInput, question.correct)}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex justify-end">
+                                <button onClick={resetAnswer} className="py-2 px-4 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition">초기화</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const ResultScreen = ({ questions, userAnswers, backToMenu, restartQuiz }) => {
+            const correctCount = userAnswers.filter(a => a && a.isCorrect).length;
+            const totalCount = questions.length;
+            const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+            const wrongQuestions = questions.filter((q, index) => !userAnswers[index]?.isCorrect);
+
+            const handleRetry = () => {
+                if (wrongQuestions.length === 0) {
+                    alert('틀린 문제가 없습니다!');
+                    return;
+                }
+                restartQuiz(wrongQuestions);
+            };
+
+            return (
+                <div className="p-4 sm:p-8 flex items-center justify-center h-full bg-slate-50">
+                    <div className="w-full max-w-4xl">
+                        <div className="text-center bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">
+                            <h1 className="text-3xl font-bold text-slate-900">🎉 최종 결과 🎉</h1>
+                            <p className="mt-4 text-5xl font-bold text-primary">{score}<span className="text-2xl text-slate-500">점</span></p>
+                            <p className="mt-2 text-md text-slate-600">
+                                총 <span className="font-bold">{totalCount}</span>문제 중 <span className="font-bold text-primary">{correctCount}</span>문제를 맞혔습니다.
+                            </p>
+                            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <button onClick={() => backToMenu({ main: 'home' })} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-blue-600 text-white font-bold shadow-sm transition-all">메인 메뉴로</button>
+                                {wrongQuestions.length > 0 && (
+                                    <button onClick={handleRetry} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-sm transition-all">
+                                        오답 문제 ({wrongQuestions.length}개) 다시 풀기
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200">
+                            <h3 className="text-xl font-bold text-slate-800 mb-6">상세 결과 보기</h3>
+                            <ul className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                                {questions.map((q, index) => {
+                                    const userAnswer = userAnswers[index];
+                                    const isCorrect = userAnswer ? userAnswer.isCorrect : false;
+                                    return (
+                                        <li key={q.id || index} className={`p-4 rounded-lg border-l-4 ${isCorrect ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50'}`}>
+                                            <p className="font-bold text-sm mb-2 text-slate-600">{`${index + 1}번`} {isCorrect ? '⭕' : '❌'}</p>
+                                            <p className="text-slate-700 font-semibold">{q.korean}</p>
+                                            {!isCorrect && <p className="text-sm text-red-600 mt-1">학생 답: {userAnswer && userAnswer.answer ? userAnswer.answer : '풀지 않음'}</p>}
+                                            <p className="text-sm text-green-700 mt-1">정답: {q.correct}</p>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState({ main: 'home', sub: null, options: {} });
+            const [showModal, setShowModal] = useState(false);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+            // 선택 문장 테스트용 전체 데이터 (모든 문장 포함)
+            const linkedProblems = useMemo(() => {
+                return Object.values(problemsWithIds).flatMap(lesson => lesson.fullComposition);
+            }, []);
+            
+            const handleSetView = (newView) => {
+                setView(prev => ({...prev, ...newView, sub: null, options: {} }));
+                setIsSidebarOpen(false);
+            };
+
+            const handleSubView = (sub, options = {}) => {
+                setView(prev => ({...prev, sub, options }));
+            };
+
+            const handleSetQuizOptions = (quizOptions) => {
+                setView(prev => ({ ...prev, sub: 'quiz', options: { ...prev.options, ...quizOptions } }));
+            };
+
+            const restartQuiz = (problems) => {
+                setView(prev => ({ ...prev, sub: 'quiz', options: { ...prev.options, problems: shuffleArray(problems), isRetry: true } }));
+            };
+
+            const handleReviewSelect = (lessons) => {
+                // 영작 포인트 확인하기: Scramble 데이터(핵심문장)를 사용하여 보여줌
+                let problems = [];
+                lessons.forEach(lessonNum => {
+                    const lessonKey = `lesson${lessonNum}`;
+                    if (problemsWithIds[lessonKey] && problemsWithIds[lessonKey].scramble) {
+                        problems = [...problems, ...problemsWithIds[lessonKey].scramble];
+                    }
+                });
+                handleSubView('reviewScreen', { problems });
+            };
+
+            const renderMainContent = () => {
+                const { main, sub, options } = view;
+
+                if (sub === 'reviewScreen') {
+                    return <ReviewScreen problems={options.problems} backToMenu={() => handleSetView({ main: 'review' })} />;
+                }
+                if (sub === 'lessonSelection') {
+                    return <LessonSelectionScreen selection={options} setQuizOptions={handleSetQuizOptions} backToMenu={() => handleSetView({ main: options.mode })} />;
+                }
+                if (sub === 'quiz') {
+                    return <QuizScreen options={options} backToMenu={() => handleSetView({ main: options.mode })} restartQuiz={restartQuiz} />;
+                }
+                if (sub === 'selectiveTest') {
+                    return <SelectiveTestScreen linkedProblems={linkedProblems} setQuizOptions={handleSetQuizOptions} backToMenu={() => handleSetView({ main: 'test' })} />;
+                }
+                
+                switch (main) {
+                    case 'review':
+                        return <SubMenuScreen
+                                    title="영작 포인트 확인하기"
+                                    icon="🧐"
+                                    items={[
+                                        { name: '1과 확인하기', icon: '1️⃣', payload: { lessons: ['1'] } },
+                                        { name: '2과 확인하기', icon: '2️⃣', payload: { lessons: ['2'] } },
+                                        { name: '3과 확인하기', icon: '3️⃣', payload: { lessons: ['3'] } },
+                                        { name: '4과 확인하기', icon: '4️⃣', payload: { lessons: ['4'] } },
+                                        { name: '1-4과 모두 확인', icon: '📚', payload: { lessons: ['1', '2', '3', '4'] } },
+                                    ]}
+                                    onItemClick={({ lessons }) => handleReviewSelect(lessons)}
+                                />;
+                    case 'practice':
+                        return <SubMenuScreen
+                                    title="연습하기"
+                                    icon="💪🏻"
+                                    items={[
+                                        { name: '핵심문장 어순배열 연습', icon: '🔀', payload: { mode: 'practice', type: 'scramble' } },
+                                        { name: '전문장 영작 연습', icon: '🖋️', payload: { mode: 'practice', type: 'fullComposition' } },
+                                        { name: '전문장 어순배열 연습', icon: '🧩', payload: { mode: 'practice', type: 'fullCompositionScramble' } }
+                                    ]}
+                                    onItemClick={(payload) => handleSubView('lessonSelection', payload)}
+                                />;
+                    case 'test':
+                         return <SubMenuScreen
+                                    title="테스트"
+                                    icon="📝"
+                                    items={[
+                                        { name: '핵심문장 어순배열 테스트', icon: '🔀', payload: { mode: 'test', type: 'scramble' } },
+                                        { name: '전문장 영작 테스트', icon: '🔥', payload: { mode: 'test', type: 'fullComposition' } },
+                                        { name: '선택 문장 테스트', icon: '📋', payload: { isSelective: true } }
+                                    ]}
+                                    onItemClick={(payload) => payload.isSelective ? handleSubView('selectiveTest') : handleSubView('lessonSelection', payload)}
+                                />;
+                    case 'home':
+                    default:
+                        return <WelcomeScreen setShowModal={setShowModal} />;
+                }
+            };
+
+            return (
+                <div className="flex h-screen font-sans relative">
+                    {showModal && <HowToUseModal closeModal={() => setShowModal(false)} />}
+                    <Sidebar
+                        currentView={view}
+                        setView={handleSetView}
+                        setShowModal={setShowModal}
+                        isOpen={isSidebarOpen}
+                        closeSidebar={() => setIsSidebarOpen(false)}
+                    />
+                    <main className="flex-grow bg-slate-50 transition-all duration-300">
+                        {renderMainContent()}
+                    </main>
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="md:hidden fixed top-4 left-4 z-40 bg-white p-2 rounded-full shadow-lg text-gray-800"
+                        aria-label="Open menu"
+                    >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
